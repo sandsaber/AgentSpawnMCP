@@ -5,6 +5,20 @@ description = "Universal MCP server for any OpenAI-compatible LLM. Supports Open
 readme = "README.md"
 requires-python = ">=3.11"
 keywords = ["mcp", "llm", "openai", "anthropic", "universal", "agent"]
+license = {text = "MIT"}
+authors = [
+    {name = "Michael Makarov", email = "michael@pleroma.studio"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "mcp[cli]>=1.13.1",
     "httpx>=0.28.1",
@@ -16,6 +30,10 @@ dependencies = [
 
 [project.scripts]
 agent-spawn = "src.__main__:app"
+
+[project.urls]
+Homepage = "https://github.com/sandsaber/AgentSpawnMCP"
+Issues = "https://github.com/sandsaber/AgentSpawnMCP/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
