@@ -1,6 +1,6 @@
 [project]
 name = "agent-spawn-mcp"
-version = "1.0.0"
+version = "1.0.4"
 description = "Universal MCP server for any OpenAI-compatible LLM. Supports OpenAI and Anthropic API formats."
 readme = "README.md"
 requires-python = ">=3.11"
