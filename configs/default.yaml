@@ -1,0 +1,62 @@
+providers:
+  - name: "grok"
+    base_url: "https://api.x.ai/v1"
+    token_env: "XAI_TOKEN"
+    default: true
+    default_model: "grok-4-1-fast-reasoning"
+    capabilities:
+      vision: true
+      files: true
+      search: true
+      code_exec: true
+      stateful: true
+      agent: true
+    models:
+      - name: "grok-4-1-fast-reasoning"
+        type: "chat"
+      - name: "grok-4-1-fast-reasoning-vision"
+        type: "vision"
+      - name: "grok-imagine-image"
+        type: "image_gen"
+      - name: "grok-imagine-video"
+        type: "video_gen"
+
+  - name: "openai"
+    base_url: "https://api.openai.com/v1"
+    token_env: "OPENAI_TOKEN"
+    default_model: "gpt-4o"
+    capabilities:
+      vision: true
+      files: true
+      search: false
+      code_exec: false
+      stateful: false
+      agent: false
+    models:
+      - name: "gpt-4o"
+        type: "chat"
+      - name: "gpt-4o-mini"
+        type: "chat"
+      - name: "gpt-4-turbo"
+        type: "vision"
+      - name: "dall-e-3"
+        type: "image_gen"
+
+  - name: "groq"
+    base_url: "https://api.groq.com/openai/v1"
+    token_env: "GROQ_TOKEN"
+    default_model: "llama-3-70b-8192"
+    capabilities:
+      vision: false
+      files: false
+      search: false
+      code_exec: false
+      stateful: false
+      agent: false
+    models:
+      - name: "llama-3-70b-8192"
+        type: "chat"
+      - name: "llama-3.3-70b-versatile"
+        type: "chat"
+      - name: "mixtral-8x7b-32768"
+        type: "chat"
