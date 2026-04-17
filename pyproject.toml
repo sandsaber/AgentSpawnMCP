@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agent-spawn = "src.__main__:app"
+agent-spawn-mcp = "src.__main__:app"
 
 [project.urls]
 Homepage = "https://github.com/sandsaber/AgentSpawnMCP"
