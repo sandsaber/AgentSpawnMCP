@@ -298,4 +298,4 @@ Provider selection:
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)
