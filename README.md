@@ -1,14 +1,11 @@
 # AgentSpawnMCP
 
-Universal MCP server for any OpenAI-compatible LLM. Supports OpenAI and Anthropic API formats, cloud providers (OpenAI, Grok, Claude, Minimax, DeepSeek) and local models (Ollama, LM Studio, Jan). Built on FastMCP with pure httpx. Zero-config via env vars; optional YAML config.
+Universal MCP server for any OpenAI-compatible LLM. Supports OpenAI and Anthropic API formats, cloud providers (OpenAI, Grok, Claude, Minimax, DeepSeek) and local models (Ollama, LM Studio, Jan). Built on FastMCP with pure httpx.
 
-## Two Modes
-
-### 1. AgentSpawnMCP — Spawn Agents (Recommended)
-
-Spawn agents on any provider via CLI — one instance per provider. Configure tokens directly in your MCP client.
+## Quick Start — Spawn Agents
 
 ```bash
+# No install needed — run directly with uvx
 uvx agent-spawn-mcp spawn \
   --name minimax \
   --url https://api.minimax.io/anthropic/v1 \
@@ -17,36 +14,21 @@ uvx agent-spawn-mcp spawn \
   --api-type anthropic
 ```
 
-### 2. UniOAPI-MCP — Full MCP Server
-
-Full-featured MCP server with chat, vision, files, search, agent tools. Uses config/YAML.
+Or install globally:
 
 ```bash
-uv run python main.py main --provider grok
-uv run python main.py main --local --model llama3
-```
-
----
-
-## AgentSpawnMCP (Spawn Agents)
-
-### Quick Start
-
-```bash
-# Install
-uvx agent-spawn-mcp spawn --name minimax --url https://api.minimax.io --token TOKEN --model MiniMax-M2.7
-
-# Or via pip
 pip install agent-spawn-mcp
-agent-spawn spawn --name minimax --url https://api.minimax.io --token TOKEN --model MiniMax-M2.7
+agent-spawn-mcp spawn --name minimax --url https://api.minimax.io --token TOKEN --model MiniMax-M2.7
 ```
 
-### API Types
+## API Types
 
 - `--api-type openai` (default) — OpenAI-compatible (`/v1/chat/completions`)
 - `--api-type anthropic` — Anthropic API (`/v1/messages`)
 
-### Claude Code / OpenCode Integration
+## Claude Code / OpenCode Integration
+
+Add to your `.mcp.json`:
 
 ```json
 {
@@ -73,12 +55,12 @@ agent-spawn spawn --name minimax --url https://api.minimax.io --token TOKEN --mo
 }
 ```
 
-### Tools Exposed
+## Tools Exposed
 
-- `{name}_agent(task, model?, system_prompt?, temperature?, max_tokens?, timeout?)`
-- `agent_info()`
+- `{name}_agent(task, model?, system_prompt?, temperature?, max_tokens?, timeout?)` — Spawn agent
+- `agent_info()` — Get provider info
 
-### Return Format
+## Return Format
 
 ```python
 {
@@ -94,11 +76,9 @@ agent-spawn spawn --name minimax --url https://api.minimax.io --token TOKEN --mo
 
 ---
 
-## UniOAPI-MCP (Full Server)
+## UniOAPI-MCP — Full Server
 
-Full MCP server with all tools for the active provider.
-
-### Quick Start
+Full MCP server with all tools (chat, vision, files, search, agent). Requires git clone.
 
 ```bash
 git clone https://github.com/sandsaber/AgentSpawnMCP
@@ -107,46 +87,32 @@ uv sync
 cp example.env .env
 # Edit .env with your tokens
 
-uv run python main.py main
+uv run python main.py main --provider grok
 ```
 
 ### Auto-Discovery
 
-Providers detected when env var is set:
+Providers auto-detected when env var is set:
 
-| Env Var | Provider | Base URL |
-|---------|----------|----------|
-| `XAI_TOKEN` | Grok | https://api.x.ai/v1 |
-| `OPENAI_TOKEN` | OpenAI | https://api.openai.com/v1 |
-| `GROQ_TOKEN` | Groq | https://api.groq.com/openai/v1 |
-| `DEEPSEEK_TOKEN` | DeepSeek | https://api.deepseek.com/v1 |
+| Env Var | Provider |
+|---------|----------|
+| `XAI_TOKEN` | Grok |
+| `OPENAI_TOKEN` | OpenAI |
+| `GROQ_TOKEN` | Groq |
+| `DEEPSEEK_TOKEN` | DeepSeek |
 
-### Claude Desktop Integration
-
-```json
-{
-  "mcpServers": {
-    "grok-mcp": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/AgentSpawnMCP", "run", "python", "main.py", "main", "--provider", "grok"],
-      "env": { "XAI_TOKEN": "xai-..." }
-    }
-  }
-}
-```
-
-### Available Tools
+### Available Tools (Full Server)
 
 | Tool | Description |
 |------|-------------|
 | `list_providers` | All discovered providers |
 | `list_models` | Models for the active provider |
 | `chat` | Text completion with session history |
-| `stateful_chat` | Server-side conversation via `response_id` |
+| `stateful_chat` | Server-side conversation |
 | `chat_with_vision` | Analyze images (jpg/jpeg/png) |
 | `generate_image` | Create or edit images |
 | `upload_file` / `list_files` / `get_file_content` / `delete_file` | File management |
-| `chat_with_files` | Chat with uploaded documents |
+| `chat_with_files` | Chat with documents |
 | `web_search` | Agentic web search |
 | `code_executor` | Execute code |
 | `agent` | Unified agent |
