@@ -1,4 +1,4 @@
-# AgentSpawnMCP
+# AgentSpawnMCP — Developer Guide
 
 Universal MCP server for any OpenAI-compatible LLM provider. Built on [FastMCP](https://github.com/modelcontextprotocol/python-sdk), pure `httpx` HTTP — no provider SDKs.
 
@@ -53,9 +53,16 @@ src/
     files.py            — file CRUD, chat_with_files
     search.py           — web_search, code_executor
     agent.py            — agent (unified)
+  agent_spawn/
+    __init__.py
+    server.py           — create_agent_spawn_server()
+    tools/
+      __init__.py
+      base.py           — _create_agent_tool() factory
+      registry.py       — register_tools()
 configs/
   default.yaml         — Optional; BUILTIN_PROVIDERS used when absent
-main.py               — Typer CLI with --provider, --url, --local, --model, --token
+main.py               — Typer CLI with main and spawn commands
 ```
 
 ## Provider Discovery
@@ -169,46 +176,37 @@ client.delete_file(file_id) -> dict
 5. **Local URL probing** (`_check_url`) — uses `httpx` with 3s timeout. Can add latency on startup if local servers are slow/absent.
 6. **`list_providers` tool** — only works in config/discovery mode; not available in ad-hoc `--url` mode (no providers list to show).
 7. **File upload** — multipart form-data, not JSON.
-8. **No tests** — no test suite exists yet.
-9. **`resolve_token()` returns empty string** if neither `token` nor `token_env` is set — caller must handle this.
+8. **`resolve_token()` returns empty string** if neither `token` nor `token_env` is set — caller must handle this.
 
-## Adding a New Provider
+## Adding a New Provider (main server)
 
 1. Add entry to `BUILTIN_PROVIDERS` in `src/config/models.py`
 2. Add `PROVIDER_TOKEN_ENV` mapping if it has a standard env var name
 3. Restart — no YAML change needed
 
-## Adding a Tool
+## Adding a Tool (main server)
 
 1. Add to appropriate `src/tools/` file
 2. Pattern: `p = get_active_provider()` → capability check → `OpenAICompatProvider(...)` → call → return string
 3. `mcp.tool()` or `mcp.tool(annotations={"readOnlyHint": True})`
 4. Add to `register_all_tools()` in `src/tools/__init__.py`
 
----
+## AgentSpawnMCP — Spawn Agents
 
-# AgentSpawnMCP
-
-Agent spawning MCP server — allows spawning agents on configurable LLM providers. Each instance exposes a single `{provider}_agent` tool.
-
-## Architecture: One Instance = One Provider
-
-Each MCP instance is configured for one provider. To use multiple providers, start multiple instances with different configs.
-
-## CLI
+### CLI
 
 ```bash
-# OpenAI-compatible API (Minimax, OpenAI, etc.)
-uv run python main.py spawn --name minimax --url https://api.minimax.io --token <token> --model MiniMax-M2.7
+# OpenAI-compatible API
+uvx agent-spawn-mcp spawn --name minimax --url https://api.minimax.io --token <token> --model MiniMax-M2.7
 
 # Anthropic-compatible API with custom path
-uv run python main.py spawn --name minimax --url https://api.minimax.io/anthropic/v1 --token <token> --model MiniMax-M2.7 --api-type anthropic
+uvx agent-spawn-mcp spawn --name minimax --url https://api.minimax.io/anthropic/v1 --token <token> --model MiniMax-M2.7 --api-type anthropic
 
 # Anthropic API
-uv run python main.py spawn --name claude --url https://api.anthropic.com --token <token> --model claude-sonnet-4-20250514 --api-type anthropic
+uvx agent-spawn-mcp spawn --name claude --url https://api.anthropic.com --token <token> --model claude-sonnet-4-20250514 --api-type anthropic
 ```
 
-## Arguments
+### Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
@@ -218,66 +216,39 @@ uv run python main.py spawn --name claude --url https://api.anthropic.com --toke
 | `--model`, `-m` | No | Default model name |
 | `--api-type` | No | API type: `openai` (default) or `anthropic` |
 
-## Tools Exposed
+### Tools Exposed
 
 - `{name}_agent` — Spawn agent for task execution
 - `agent_info` — Get current provider info
 
-## Agent Tool Interface
+### Agent Tool Interface
 
 ```python
 {provider}_agent(
     task: str,                           # Task description
     model: str | None = None,           # Override default model
-    system_prompt: str | None = None,    # Custom system prompt
-    temperature: float | None = None,    # 0.0-2.0
-    max_tokens: int | None = None,       # Response token limit
-    timeout: int = 120,                  # Request timeout (seconds)
-) -> dict:
-    """
-    Returns:
-        {
-            "result": "...",  # Agent response text
-            "metadata": {
-                "provider": "provider_name",
-                "model_used": "model-name",
-                "usage": {"prompt_tokens": N, "completion_tokens": N},
-                "latency_ms": N
-            }
-        }
-    """
+    system_prompt: str | None = None,  # Custom system prompt
+    temperature: float | None = None,   # 0.0-2.0
+    max_tokens: int | None = None,     # Response token limit
+    timeout: int = 120,                 # Request timeout (seconds)
+) -> dict
 ```
 
-## Claude Code / OpenCode Integration
+### Return Format
 
-Add to your MCP client config (`.mcp.json`):
-
-```json
+```python
 {
-  "mcpServers": {
-    "minimax-agent": {
-      "command": "uv",
-      "args": ["run", "python", "main.py", "spawn",
-               "--name", "minimax",
-               "--url", "https://api.minimax.io/anthropic/v1",
-               "--token", "your-minimax-token",
-               "--model", "MiniMax-M2.7",
-               "--api-type", "anthropic"]
-    },
-    "claude-agent": {
-      "command": "uv",
-      "args": ["run", "python", "main.py", "spawn",
-               "--name", "claude",
-               "--url", "https://api.anthropic.com",
-               "--token", "your-anthropic-token",
-               "--model", "claude-sonnet-4-20250514",
-               "--api-type", "anthropic"]
+    "result": "...",  # Agent response text
+    "metadata": {
+        "provider": "provider_name",
+        "model_used": "model-name",
+        "usage": {"prompt_tokens": N, "completion_tokens": N},
+        "latency_ms": N
     }
-  }
 }
 ```
 
-## Code Organization
+### Code Organization
 
 ```
 src/agent_spawn/
@@ -289,7 +260,7 @@ src/agent_spawn/
     registry.py          — register_tools()
 ```
 
-## `create_agent_spawn_server()` Signature
+### `create_agent_spawn_server()` Signature
 
 ```python
 def create_agent_spawn_server(
@@ -302,6 +273,6 @@ def create_agent_spawn_server(
 ) -> FastMCP
 ```
 
-## Adding a New Agent Provider
+### Adding a New Agent Provider
 
 No code changes needed. Just add a new MCP server instance with `--name`, `--url`, `--token`, `--model`, and optionally `--api-type`.

@@ -2,46 +2,48 @@
 
 ## 1. Concept & Vision
 
-**AgentSpawnMCP** — универсальный MCP-сервер, который объединяет любые LLM-провайдеры (OpenAI-совместимые API) в единый интерфейс. Один сервер, произвольное число провайдеров/моделей, каждый со своим API-ключом — и все инструменты доступны через единый MCP-протокол без изменения кода.
+**AgentSpawnMCP** — universal MCP server that combines any LLM providers (OpenAI-compatible APIs) into a single interface. One server, arbitrary number of providers/models, each with its own API key — all tools available through a unified MCP protocol without code changes.
 
-Переиспользует идею и структуру Grok-MCP, но вместо жёсткой привязки к xAI — универсальный адаптер через HTTP REST вызовы к OpenAI-совместимым эндпоинтам.
+Reuses the idea and structure of Grok-MCP, but instead of hard binding to xAI — universal adapter via HTTP REST calls to OpenAI-compatible endpoints.
 
-Ощущение: минималистичный, прагматичный, "настраиваешь — и работает".
+Feel: minimalist, pragmatic, "configure — and it works".
 
 ## 2. Design Language
 
-- **Aesthetic**: утилитарный CLI-стиль — чистый, без украшательств, фокус на функциональность
-- **Палитра**: N/A (CLI-only, нет UI)
-- **Типографика**: N/A
-- **Иконки**: N/A
-- **Анимации**: N/A
+- **Aesthetic**: utilitarian CLI style — clean, no decoration, focus on functionality
+- **Palette**: N/A (CLI-only, no UI)
+- **Typography**: N/A
+- **Icons**: N/A
+- **Animations**: N/A
 
 ## 3. Layout & Structure
 
 ```
-uniOAPI-MCP/
+AgentSpawnMCP/
 ├── src/
 │   ├── __init__.py
-│   ├── server.py          # Главный FastMCP-сервер
+│   ├── server.py          # Main FastMCP server
+│   ├── utils.py          # load_history, save_history, encode_image_to_base64
 │   ├── providers/
 │   │   ├── __init__.py
-│   │   ├── base.py        # Базовый абстрактный провайдер
-│   │   └── openai_compat.py  # OpenAI-совместимый HTTP провайдер
+│   │   ├── base.py        # Abstract BaseProvider
+│   │   └── openai_compat.py  # OpenAI-compatible HTTP provider
 │   ├── tools/
 │   │   ├── __init__.py
 │   │   ├── chat.py        # Chat/completion tools
 │   │   ├── vision.py      # Image analysis
 │   │   ├── files.py       # File management
-│   │   ├── search.py      # Web search (провайдерозависимо)
-│   │   └── agent.py       # Agentic unified tool
+│   │   ├── search.py      # Web search
+│   │   └── agent.py       # Unified agent tool
 │   ├── config/
 │   │   ├── __init__.py
 │   │   └── loader.py      # YAML config loader + env override
-│   └── utils.py
+│   └── agent_spawn/        # Agent spawning module
+│       ├── __init__.py
+│       ├── server.py
+│       └── tools/
 ├── configs/
-│   └── default.yaml        # Пример конфигурации
-├── tests/
-│   └── ...
+│   └── default.yaml        # Example configuration
 ├── pyproject.toml
 └── README.md
 ```
@@ -50,65 +52,54 @@ uniOAPI-MCP/
 
 ### 4.1 Multi-Provider Config
 
-Каждая конфигурация — провайдер с набором моделей. Конфиг в YAML:
+Each configuration is a provider with a set of models. Config in YAML:
 
 ```yaml
 providers:
   - name: "grok"
-    api_key_env: "XAI_API_KEY"      # Имя env var (не значение)
-    base_url: "https://api.x.ai/v1"  # OpenAI-совместимый endpoint
+    token_env: "XAI_TOKEN"
+    default: true
     default_model: "grok-4-1-fast-reasoning"
+    capabilities:
+      vision: true
+      files: true
+      search: true
+      code_exec: true
+      stateful: true
+      agent: true
     models:
       - name: "grok-4-1-fast-reasoning"
         type: "chat"
       - name: "grok-4-1-fast-reasoning-vision"
         type: "vision"
-
-  - name: "openai"
-    api_key_env: "OPENAI_API_KEY"
-    base_url: "https://api.openai.com/v1"
-    default_model: "gpt-4o"
-    models:
-      - name: "gpt-4o"
-        type: "chat"
-      - name: "gpt-4o-mini"
-        type: "chat"
-      - name: "gpt-4-turbo"
-        type: "vision"
+      - name: "grok-imagine-image"
+        type: "image_gen"
 ```
 
 ### 4.2 Provider Selection Per Tool
 
-Каждый MCP-инструмент принимает опциональный параметр `provider` (название). Если не указан — используется провайдер с пометкой `default: true` (или первый в списке).
-
-```python
-@mcp.tool()
-async def chat(prompt: str, provider: Optional[str] = None, model: Optional[str] = None, ...):
-    cfg = config.get_provider(provider)
-    client = cfg.get_client()
-    ...
-```
+Each MCP tool accepts optional `provider` parameter. If not specified — uses provider with `default: true` (or first in list).
 
 ### 4.3 Core Tools (per provider)
 
-| Tool | Описание |
-|------|----------|
-| `list_providers` | Список всех настроенных провайдеров и их моделей |
-| `list_models` | Модели конкретного провайдера (delegate к `/models`) |
-| `chat` | Текстовый чат с history-сессиями |
-| `chat_with_vision` | Анализ изображений |
-| `stateful_chat` | Продолжениеconversation по response_id (если провайдер поддерживает) |
-| `upload_file` | Загрузка файла |
-| `list_files` | Список файлов |
-| `get_file_content` | Содержимое файла |
-| `delete_file` | Удаление файла |
-| `chat_with_files` | Чат с документами |
-| `web_search` | Веб-поиск (если провайдер поддерживает tools) |
-| `code_executor` | Выполнение кода (если провайдер поддерживает) |
+| Tool | Description |
+|------|-------------|
+| `list_providers` | List of all configured providers and their models |
+| `list_models` | Models for a specific provider |
+| `chat` | Text chat with history sessions |
+| `chat_with_vision` | Image analysis |
+| `stateful_chat` | Continue conversation via response_id |
+| `upload_file` | File upload |
+| `list_files` | List files |
+| `get_file_content` | File content |
+| `delete_file` | Delete file |
+| `chat_with_files` | Chat with documents |
+| `web_search` | Web search (if provider supports tools) |
+| `code_executor` | Code execution (if provider supports) |
 
 ### 4.4 Provider Capabilities
 
-Не все провайдеры поддерживают все функции. Каждый провайдер декларирует capabilities:
+Not all providers support all features. Each provider declares capabilities:
 
 ```yaml
 capabilities:
@@ -120,15 +111,13 @@ capabilities:
   agent: true        # unified agent tool
 ```
 
-Если capability нет — tool возвращает informative error.
-
 ### 4.5 Session History
 
-Аналогично Grok-MCP: JSON-файлы в `chats/{provider}_{session}.json`. Формат тот же.
+JSON files in `chats/{provider}_{session}.json`. Timestamp format: `"%d.%m.%Y %H:%M:%S"`.
 
 ### 4.6 Error Handling
 
-- Missing API key → чёткое сообщение с инструкцией
+- Missing API key → clear message with instructions
 - Provider not found → list available providers
 - Model not found → list models for provider
 - Capability not supported → informative error
@@ -139,8 +128,9 @@ capabilities:
 ### 5.1 `ProviderConfig`
 ```python
 name: str
-api_key: str          # resolved from env var
 base_url: str
+token: str          # resolved from env var
+token_env: str
 default_model: str
 models: List[ModelConfig]
 capabilities: Capabilities
@@ -180,10 +170,10 @@ Content-Type: application/json
 - **HTTP**: `httpx` (sync, stateless per request)
 - **MCP Framework**: `mcp[cli]>=1.13.1`
 - **Config**: YAML via `pyyaml` + dotenv override
-- **Serialization**: `pydantic>=2.9` для validated config models
+- **Serialization**: `pydantic>=2.9` for validated config models
 
 ### API Pattern (OpenAI-Compatible)
-Все запросы — REST HTTP к `{base_url}/{path}`:
+All requests are REST HTTP to `{base_url}/{path}`:
 
 ```
 POST /v1/chat/completions       → chat, vision, agent
@@ -197,12 +187,38 @@ POST /v1/chat/completions      → web_search / code_executor (via tools param)
 ```
 
 ### No SDK Dependencies
-В отличие от Grok-MCP, здесь **нет SDK** — только голый HTTP. Это обеспечивает совместимость с любым OpenAI-совместимым провайдером.
+Unlike Grok-MCP, there are **no SDKs** — only raw HTTP. This ensures compatibility with any OpenAI-compatible provider.
 
 ### Config Loading Order
 1. Load `configs/default.yaml`
-2. Override via environment variables matching pattern `PROVIDER_{NAME}_API_KEY`, `PROVIDER_{NAME}_BASE_URL`
+2. Override via environment variables matching pattern `PROVIDER_{NAME}_TOKEN`, `PROVIDER_{NAME}_BASE_URL`
 3. Validate with Pydantic
 
 ### Tool Naming Convention
-Инструменты НЕ префиксируются именем провайдера. Выбор провайдера — через параметр `provider`. Это позволяет прозрачно переключаться между провайдерами без смены вызовов.
+Tools are NOT prefixed with provider name. Provider selection is through `provider` parameter. This allows transparent switching between providers without changing calls.
+
+## 7. AgentSpawnMCP (Spawn Mode)
+
+Separate mode for spawning agents on configured providers.
+
+### CLI Arguments
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `--name` | Yes | Provider name (tool name: `{name}_agent`) |
+| `--url` | Yes | API base URL |
+| `--token` | Yes | API token |
+| `--model` | No | Default model name |
+| `--api-type` | No | `openai` (default) or `anthropic` |
+
+### Return Format
+```python
+{
+    "result": "...",  # Agent response text
+    "metadata": {
+        "provider": "provider_name",
+        "model_used": "model-name",
+        "usage": {"prompt_tokens": N, "completion_tokens": N},
+        "latency_ms": N
+    }
+}
+```
