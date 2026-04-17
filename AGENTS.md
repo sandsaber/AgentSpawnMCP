@@ -12,7 +12,7 @@ Spawn agents on any provider. No git clone needed — runs directly with `uvx`.
 uvx agent-spawn-mcp spawn --name minimax --url https://api.minimax.io/anthropic/v1 --token TOKEN --model MiniMax-M2.7 --api-type anthropic
 ```
 
-### 2. UniOAPI-MCP — Full Server
+### 2. AgentSpawnMCP — Full Server
 
 Full-featured MCP server with all tools. Requires git clone.
 

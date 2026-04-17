@@ -76,7 +76,7 @@ Add to your `.mcp.json`:
 
 ---
 
-## UniOAPI-MCP — Full Server
+## AgentSpawnMCP — Full Server
 
 Full MCP server with all tools (chat, vision, files, search, agent). Requires git clone.
 

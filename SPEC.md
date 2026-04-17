@@ -56,7 +56,7 @@ uvx agent-spawn-mcp spawn --name minimax --url ... --token ... --model ... --api
 | `--model` | No | Default model |
 | `--api-type` | No | `openai` (default) or `anthropic` |
 
-### UniOAPI-MCP (Full Server Mode)
+### AgentSpawnMCP (Full Server Mode)
 
 Full MCP server with all tools. Auto-discovers providers from env vars or YAML config.
 
