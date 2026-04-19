@@ -98,6 +98,15 @@ Add to your `.mcp.json`:
 - `{name}_agent(task, model?, system_prompt?, temperature?, max_tokens?, timeout?)` — Spawn agent
 - `agent_info()` — Get provider info
 
+### `max_tokens` behaviour
+
+The client imposes **no cap**. If you omit `max_tokens`:
+- **OpenAI-compat** providers fall back to their own default (usually the
+  model's full output budget). Reasoning models like GLM-5.x can burn huge
+  amounts on chain-of-thought — pass an explicit limit for short tasks.
+- **Anthropic-compat** providers will error: the Anthropic API requires
+  `max_tokens`. Pass it explicitly (e.g. `max_tokens=8192`).
+
 ## Return Format
 
 ```python

@@ -116,7 +116,7 @@ class OpenAICompatProvider(BaseProvider):
     ) -> dict:
         if self.api_type == "anthropic":
             return self._anthropic_chat(
-                model, messages, max_tokens=max_tokens or 4096, timeout=timeout, **kwargs
+                model, messages, max_tokens=max_tokens, timeout=timeout, **kwargs
             )
         return self._openai_chat(
             model, messages, tools, tool_choice, stream, store_messages,
@@ -167,12 +167,18 @@ class OpenAICompatProvider(BaseProvider):
         self,
         model: str,
         messages: list[dict],
-        max_tokens: int = 4096,
+        max_tokens: int | None = None,
         system_prompt: str | None = None,
         temperature: float | None = None,
         timeout: float | None = None,
         **kwargs,
     ) -> dict:
+        if max_tokens is None:
+            raise ValueError(
+                "Anthropic API requires `max_tokens`. Pass it explicitly to the "
+                "agent tool (e.g. max_tokens=4096)."
+            )
+
         anthropic_messages = []
         system = system_prompt or ""
         for msg in messages:
