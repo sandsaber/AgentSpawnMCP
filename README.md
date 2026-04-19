@@ -98,6 +98,39 @@ Add to your `.mcp.json`:
 - `{name}_agent(task, model?, system_prompt?, temperature?, max_tokens?, timeout?)` — Spawn agent
 - `agent_info()` — Get provider info
 
+### `max_tokens` behaviour
+
+The client imposes **no cap**. Behaviour when `max_tokens` is omitted depends
+on `--api-type`:
+
+- **`openai`** — the field is simply not sent; the provider falls back to its
+  own default (usually the model's full output budget). Reasoning models like
+  GLM-5.x can burn huge amounts on chain-of-thought, so pass an explicit
+  limit for short tasks.
+
+- **`anthropic`** — the Anthropic API requires the field, so when you omit
+  it the client fills in a safe default of **16384**. Override when you
+  need more or want to cap spend:
+
+  ```python
+  claude_agent(task="summarise this PR")                    # uses 16384
+  claude_agent(task="exhaustive review", max_tokens=64000)  # bigger
+  claude_agent(task="ping",              max_tokens=256)    # cheaper
+  ```
+
+  Typical values:
+
+  | Use case                    | `max_tokens` |
+  |-----------------------------|--------------|
+  | Short answer / ping         | 1024         |
+  | Summary / routine agent run | 4096         |
+  | Code generation / long task | 8192         |
+  | Default (if omitted)        | **16384**    |
+  | Exhaustive analysis         | 32000+       |
+
+  Upper bound is model-specific (Claude Sonnet 4 — 64k, Opus 4 — 32k,
+  GLM-4.5-Air — 8k, etc.). Pass `max_tokens` explicitly up to that limit.
+
 ## Return Format
 
 ```python
