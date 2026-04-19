@@ -100,12 +100,33 @@ Add to your `.mcp.json`:
 
 ### `max_tokens` behaviour
 
-The client imposes **no cap**. If you omit `max_tokens`:
-- **OpenAI-compat** providers fall back to their own default (usually the
-  model's full output budget). Reasoning models like GLM-5.x can burn huge
-  amounts on chain-of-thought — pass an explicit limit for short tasks.
-- **Anthropic-compat** providers will error: the Anthropic API requires
-  `max_tokens`. Pass it explicitly (e.g. `max_tokens=8192`).
+The client imposes **no cap**. Behaviour when `max_tokens` is omitted depends
+on `--api-type`:
+
+- **`openai`** — the field is simply not sent; the provider falls back to its
+  own default (usually the model's full output budget). Reasoning models like
+  GLM-5.x can burn huge amounts on chain-of-thought, so pass an explicit
+  limit for short tasks.
+
+- **`anthropic`** — ⚠️ **`max_tokens` is mandatory.** The Anthropic API rejects
+  requests without it, so the tool raises `ValueError` instead of silently
+  capping. You must pass it on every call:
+
+  ```python
+  claude_agent(task="summarise this PR", max_tokens=8192)
+  ```
+
+  Typical values:
+
+  | Use case                    | `max_tokens` |
+  |-----------------------------|--------------|
+  | Short answer / ping         | 1024         |
+  | Summary / routine agent run | 4096         |
+  | Code generation / long task | 8192         |
+  | Exhaustive analysis         | 16384+       |
+
+  Upper bound is set by the model (Claude Sonnet 4 — 64k, Opus 4 — 32k,
+  GLM-4.5-Air — 8k, etc.).
 
 ## Return Format
 
