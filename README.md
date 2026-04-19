@@ -23,8 +23,24 @@ agent-spawn-mcp spawn --name minimax --url https://api.minimax.io --token TOKEN 
 
 ## API Types
 
-- `--api-type openai` (default) — OpenAI-compatible (`/v1/chat/completions`)
-- `--api-type anthropic` — Anthropic API (`/v1/messages`)
+- `--api-type openai` (default) — OpenAI-compatible (`chat/completions`)
+- `--api-type anthropic` — Anthropic API (`v1/messages`)
+
+### URL versioning
+
+Pass `--url` pointing directly at the API root. If your base URL already contains
+a version segment (e.g. `…/paas/v4`), the client will **not** re-append `v1/`.
+Examples:
+
+| Provider       | `--url`                                      | `--api-type` |
+|----------------|----------------------------------------------|--------------|
+| OpenAI         | `https://api.openai.com/v1`                  | openai       |
+| Grok           | `https://api.x.ai/v1`                        | openai       |
+| z.ai (primary) | `https://api.z.ai/api/paas/v4`               | openai       |
+| z.ai (coding)  | `https://api.z.ai/api/coding/paas/v4`        | openai       |
+| z.ai Anthropic | `https://api.z.ai/api/anthropic`             | anthropic    |
+| Anthropic      | `https://api.anthropic.com`                  | anthropic    |
+| Minimax        | `https://api.minimax.io/anthropic/v1`        | anthropic    |
 
 ## Claude Code / OpenCode Integration
 
@@ -50,10 +66,32 @@ Add to your `.mcp.json`:
                "--token", "your-anthropic-token",
                "--model", "claude-sonnet-4-20250514",
                "--api-type", "anthropic"]
+    },
+    "glm-agent": {
+      "command": "uvx",
+      "args": ["agent-spawn-mcp", "spawn",
+               "--name", "glm",
+               "--url", "https://api.z.ai/api/paas/v4",
+               "--token", "your-zai-token",
+               "--model", "glm-5.1"]
+    },
+    "glm-turbo-agent": {
+      "command": "uvx",
+      "args": ["agent-spawn-mcp", "spawn",
+               "--name", "glm-turbo",
+               "--url", "https://api.z.ai/api/paas/v4",
+               "--token", "your-zai-token",
+               "--model", "glm-5-turbo"]
     }
   }
 }
 ```
+
+**Gotchas:**
+- Each entry in `.mcp.json` must use a unique `--name` — it becomes the tool
+  name `{name}_agent`, and duplicates collide.
+- `--token` on the command line is visible in `ps` output and some crash logs.
+  Prefer keeping the MCP config file read-protected (`chmod 600`).
 
 ## Tools Exposed
 
@@ -100,6 +138,7 @@ Providers auto-detected when env var is set:
 | `OPENAI_TOKEN` | OpenAI |
 | `GROQ_TOKEN` | Groq |
 | `DEEPSEEK_TOKEN` | DeepSeek |
+| `ZAI_TOKEN` | z.ai (GLM) |
 
 ### Available Tools (Full Server)
 
@@ -110,7 +149,7 @@ Providers auto-detected when env var is set:
 | `chat` | Text completion with session history |
 | `stateful_chat` | Server-side conversation |
 | `chat_with_vision` | Analyze images (jpg/jpeg/png) |
-| `generate_image` | Create or edit images |
+| `generate_image` | Create or edit images (OpenAI-format only) |
 | `upload_file` / `list_files` / `get_file_content` / `delete_file` | File management |
 | `chat_with_files` | Chat with documents |
 | `web_search` | Agentic web search |
@@ -119,6 +158,19 @@ Providers auto-detected when env var is set:
 | `list_chat_sessions` / `get_chat_history` / `clear_chat_history` | Session history |
 
 ---
+
+## Image generation support
+
+`generate_image` targets the OpenAI `/images/generations` request shape
+(`model` / `prompt` / `n` / `image_url`). Providers that expose the same
+shape (OpenAI `dall-e-3`, Grok `grok-imagine-image`) work out of the box.
+
+Providers with custom image APIs are **not** currently supported:
+- z.ai (`glm-image`, `cogview-4-250304`) expects `quality` / `size` / `user_id`
+  at `/paas/v4/images/generations`, not the OpenAI shape.
+- Anthropic-compat endpoints don't expose image generation at all.
+
+For these, use the provider's native HTTP API directly.
 
 ## License
 

@@ -40,6 +40,7 @@ def _create_agent_tool(
             base_url=api_url,
             api_key=api_token,
             api_type=api_type,
+            timeout=float(timeout),
         )
         model = model or default_model
 
@@ -54,6 +55,7 @@ def _create_agent_tool(
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
+            timeout=float(timeout),
         )
         latency_ms = int((time.perf_counter() - start) * 1000)
 
