@@ -87,6 +87,21 @@ BUILTIN_PROVIDERS: dict[str, dict] = {
             {"name": "deepseek-coder", "type": "chat"},
         ],
     },
+    "zai": {
+        "base_url": "https://api.z.ai/api/paas/v4",
+        "default_model": "glm-5.1",
+        "capabilities": dict(vision=False, files=False, search=False, code_exec=False, stateful=False, agent=True),
+        "models": [
+            {"name": "glm-5.1", "type": "chat"},
+            {"name": "glm-5", "type": "chat"},
+            {"name": "glm-5-turbo", "type": "chat"},
+            {"name": "glm-4.7", "type": "chat"},
+            {"name": "glm-4.6", "type": "chat"},
+            {"name": "glm-4.5", "type": "chat"},
+            {"name": "glm-image", "type": "image_gen"},
+            {"name": "cogview-4-250304", "type": "image_gen"},
+        ],
+    },
 }
 
 # Env var name → provider name mapping
@@ -97,6 +112,7 @@ PROVIDER_TOKEN_ENV: dict[str, str] = {
     "TOGETHER_TOKEN": "together",
     "MISTRAL_TOKEN": "mistral",
     "DEEPSEEK_TOKEN": "deepseek",
+    "ZAI_TOKEN": "zai",
 }
 
 PROVIDER_DEFAULT_MODEL_ENV: dict[str, str] = {
