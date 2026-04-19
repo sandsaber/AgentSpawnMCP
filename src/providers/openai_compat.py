@@ -163,6 +163,8 @@ class OpenAICompatProvider(BaseProvider):
         resp = self._post("v1/chat/completions", data, timeout=timeout)
         return resp.json()
 
+    ANTHROPIC_DEFAULT_MAX_TOKENS = 16384
+
     def _anthropic_chat(
         self,
         model: str,
@@ -174,10 +176,7 @@ class OpenAICompatProvider(BaseProvider):
         **kwargs,
     ) -> dict:
         if max_tokens is None:
-            raise ValueError(
-                "Anthropic API requires `max_tokens`. Pass it explicitly to the "
-                "agent tool (e.g. max_tokens=4096)."
-            )
+            max_tokens = self.ANTHROPIC_DEFAULT_MAX_TOKENS
 
         anthropic_messages = []
         system = system_prompt or ""

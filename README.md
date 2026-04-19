@@ -108,12 +108,14 @@ on `--api-type`:
   GLM-5.x can burn huge amounts on chain-of-thought, so pass an explicit
   limit for short tasks.
 
-- **`anthropic`** — ⚠️ **`max_tokens` is mandatory.** The Anthropic API rejects
-  requests without it, so the tool raises `ValueError` instead of silently
-  capping. You must pass it on every call:
+- **`anthropic`** — the Anthropic API requires the field, so when you omit
+  it the client fills in a safe default of **16384**. Override when you
+  need more or want to cap spend:
 
   ```python
-  claude_agent(task="summarise this PR", max_tokens=8192)
+  claude_agent(task="summarise this PR")                    # uses 16384
+  claude_agent(task="exhaustive review", max_tokens=64000)  # bigger
+  claude_agent(task="ping",              max_tokens=256)    # cheaper
   ```
 
   Typical values:
@@ -123,10 +125,11 @@ on `--api-type`:
   | Short answer / ping         | 1024         |
   | Summary / routine agent run | 4096         |
   | Code generation / long task | 8192         |
-  | Exhaustive analysis         | 16384+       |
+  | Default (if omitted)        | **16384**    |
+  | Exhaustive analysis         | 32000+       |
 
-  Upper bound is set by the model (Claude Sonnet 4 — 64k, Opus 4 — 32k,
-  GLM-4.5-Air — 8k, etc.).
+  Upper bound is model-specific (Claude Sonnet 4 — 64k, Opus 4 — 32k,
+  GLM-4.5-Air — 8k, etc.). Pass `max_tokens` explicitly up to that limit.
 
 ## Return Format
 
