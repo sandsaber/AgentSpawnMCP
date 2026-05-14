@@ -54,6 +54,16 @@ def test_openai_omits_max_tokens_when_none(patch_httpx):
     assert str(rec.last_request.url) == "https://api.openai.com/v1/chat/completions"
 
 
+def test_rejects_unknown_api_type():
+    with pytest.raises(ValueError, match="Unsupported api_type"):
+        OpenAICompatProvider(
+            name="t",
+            base_url="https://api.example.test/v1",
+            api_key="k",
+            api_type="unknown",
+        )
+
+
 def test_openai_sends_max_tokens_when_set(patch_httpx):
     rec = patch_httpx(
         response_body={

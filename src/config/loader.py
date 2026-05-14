@@ -124,6 +124,14 @@ def get_active_provider() -> ProviderConfig:
     return _active_provider
 
 
+def set_active_provider(provider: ProviderConfig) -> ConfigModel:
+    """Use a single inline provider without reading YAML config."""
+    global _config, _active_provider
+    _config = ConfigModel(providers=[provider])
+    _active_provider = provider
+    return _config
+
+
 def list_providers() -> list[ProviderConfig]:
     if _config is None:
         raise RuntimeError("Call load_config() first.")

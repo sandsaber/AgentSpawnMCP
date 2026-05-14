@@ -1,5 +1,5 @@
 from mcp.server.fastmcp import FastMCP
-from ..config import get_active_provider, list_providers
+from ..config import list_providers as get_configured_providers
 
 
 def register_info_tools(mcp: FastMCP) -> None:
@@ -8,7 +8,7 @@ def register_info_tools(mcp: FastMCP) -> None:
     @mcp.tool(annotations={"readOnlyHint": True})
     async def list_providers():
         """List all configured providers and their models."""
-        all_providers = list_providers()
+        all_providers = get_configured_providers()
         result = ["**Configured Providers:**\n"]
         for p in all_providers:
             default_marker = " (default)" if p.default else ""

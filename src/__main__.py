@@ -1,7 +1,7 @@
 import os
 import sys
+from typing import Literal
 import typer
-from pathlib import Path
 from dotenv import load_dotenv
 
 app = typer.Typer(help="AgentSpawnMCP — Universal OpenAI-compatible MCP server")
@@ -63,11 +63,12 @@ def main(
 
     Run multiple instances for multiple providers simultaneously.
     """
-    from src.config.loader import load_config
+    from src.config import get_active_provider
     from src.config.models import ProviderConfig, Capabilities, ModelConfig
 
     provider_name = ctx.obj.get("provider")
     cfg_path = ctx.obj.get("config") or "configs/default.yaml"
+    inline_provider: ProviderConfig | None = None
 
     if local and url is None:
         url = "http://localhost:11434/v1"
@@ -95,47 +96,32 @@ def main(
             ),
             models=[ModelConfig(name=model or "llama3", type="chat")],
         )
-        from src.config.loader import load_config as _lc
-        import src.config.loader as loader_module
-        loader_module._active_provider = inline_provider
-        active = inline_provider
+
+    from src.server import create_server
+
+    try:
+        mcp = create_server(
+            config_path=cfg_path,
+            active_provider=provider_name,
+            inline_provider=inline_provider,
+            model_override=model if inline_provider is None else None,
+        )
+    except Exception as e:
+        print(f"Config error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    active = get_active_provider()
+    if inline_provider is not None:
         print(
-            f"Starting AgentSpawnMCP (local mode, url={url}, model={model or 'llama3'})",
+            f"Starting AgentSpawnMCP (local mode, url={active.base_url}, model={active.default_model_name()})",
             file=sys.stderr,
         )
     else:
-        try:
-            cfg = load_config(cfg_path, active_provider=provider_name)
-        except Exception as e:
-            print(f"Config error: {e}", file=sys.stderr)
-            sys.exit(1)
-
-        active = cfg.get_default_provider()
-        if active is None:
-            print("No providers configured.", file=sys.stderr)
-            sys.exit(1)
-
-        token_val = active.resolve_token()
-        if not token_val:
-            env_hint = active.token_env or f"PROVIDER_{active.name.upper()}_TOKEN"
-            print(
-                f"Token not found for provider '{active.name}'.\n"
-                f"Set {env_hint} in example.env or as an env var.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-        if model:
-            active.default_model = model
-
         print(
             f"Starting AgentSpawnMCP (provider={active.name}, base_url={active.base_url})",
             file=sys.stderr,
         )
 
-    from src.server import create_server
-
-    mcp = create_server(config_path=cfg_path, active_provider=provider_name)
     mcp.run(transport="stdio")
 
 
@@ -157,7 +143,7 @@ def spawn(
         None, "--model", "-m",
         help="Default model name (optional).",
     ),
-    api_type: str = typer.Option(
+    api_type: Literal["openai", "anthropic"] = typer.Option(
         "openai", "--api-type",
         help="API type: 'openai' or 'anthropic' (default: openai).",
     ),

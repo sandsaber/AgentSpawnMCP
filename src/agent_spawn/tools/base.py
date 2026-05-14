@@ -1,6 +1,46 @@
-from mcp.server.fastmcp import FastMCP
 import time
+from typing import Any
 from ...providers import OpenAICompatProvider
+
+
+def _content_to_text(content: Any) -> str:
+    """Normalize provider content blocks into plain text for MCP clients."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text")
+                if text is not None:
+                    parts.append(str(text))
+        if parts:
+            return "".join(parts)
+    return str(content)
+
+
+def _extract_assistant_content(response: dict[str, Any]) -> str:
+    if not isinstance(response, dict):
+        raise ValueError("Provider response must be a JSON object.")
+
+    choices = response.get("choices")
+    if isinstance(choices, list) and choices:
+        first_choice = choices[0]
+        if isinstance(first_choice, dict):
+            message = first_choice.get("message")
+            if isinstance(message, dict) and "content" in message:
+                return _content_to_text(message["content"])
+            if "text" in first_choice:
+                return _content_to_text(first_choice["text"])
+
+    if "content" in response:
+        return _content_to_text(response["content"])
+
+    raise ValueError("Provider response did not include assistant content.")
 
 
 def _create_agent_tool(
@@ -35,14 +75,26 @@ def _create_agent_tool(
         Returns:
             dict with 'result' (agent response) and 'metadata' (provider, model, usage, latency).
         """
+        if not task or not task.strip():
+            raise ValueError("Agent task must not be empty.")
+
+        selected_model = (model or default_model or "").strip()
+        if not selected_model:
+            raise ValueError("No model provided. Start the server with --model or pass model to the tool.")
+
+        timeout_seconds = float(timeout)
+        if timeout_seconds <= 0:
+            raise ValueError("timeout must be greater than zero.")
+        if max_tokens is not None and max_tokens <= 0:
+            raise ValueError("max_tokens must be greater than zero when provided.")
+
         client = OpenAICompatProvider(
             name=provider_name,
             base_url=api_url,
             api_key=api_token,
             api_type=api_type,
-            timeout=float(timeout),
+            timeout=timeout_seconds,
         )
-        model = model or default_model
 
         messages = []
         if system_prompt:
@@ -51,22 +103,24 @@ def _create_agent_tool(
 
         start = time.perf_counter()
         resp = client.chat(
-            model=model,
+            model=selected_model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
-            timeout=float(timeout),
+            timeout=timeout_seconds,
         )
         latency_ms = int((time.perf_counter() - start) * 1000)
 
-        content = resp["choices"][0]["message"]["content"]
+        content = _extract_assistant_content(resp)
         usage = resp.get("usage", {})
+        if not isinstance(usage, dict):
+            usage = {}
 
         return {
             "result": content,
             "metadata": {
                 "provider": provider_name,
-                "model_used": model,
+                "model_used": selected_model,
                 "usage": usage,
                 "latency_ms": latency_ms,
             }

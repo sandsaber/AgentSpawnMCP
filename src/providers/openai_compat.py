@@ -3,12 +3,13 @@ import re
 import json
 import base64
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 import httpx
 from .base import BaseProvider
 
 
 _VERSION_SEG_RE = re.compile(r"/v\d+(?:/|$)")
+VALID_API_TYPES = {"openai", "anthropic"}
 
 
 class OpenAICompatProvider(BaseProvider):
@@ -23,6 +24,9 @@ class OpenAICompatProvider(BaseProvider):
         api_type: str = "openai",
         timeout: float = 120.0,
     ):
+        if api_type not in VALID_API_TYPES:
+            supported = ", ".join(sorted(VALID_API_TYPES))
+            raise ValueError(f"Unsupported api_type '{api_type}'. Expected one of: {supported}.")
         self.name = name
         self.base_url = base_url
         self.api_key = api_key
