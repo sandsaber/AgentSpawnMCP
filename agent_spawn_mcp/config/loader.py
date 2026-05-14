@@ -60,7 +60,7 @@ def load_config(
     4. If discover=True and no providers found, scan env vars for available providers
     """
     global _config, _active_provider
-    load_dotenv("example.env")
+    load_dotenv()
     path = Path(config_path)
     data = _load_yaml(path)
 

@@ -45,18 +45,18 @@ general-purpose MCP tools.
 ## Repository Map
 
 ```text
-main.py                         # Thin CLI shim to src.__main__:app
-src/__main__.py                 # Typer CLI: main and spawn commands
-src/server.py                   # create_server() for the full server
-src/utils.py                    # Local chat history helpers
-src/config/models.py            # Pydantic config models and BUILTIN_PROVIDERS
-src/config/loader.py            # load_config(), active provider globals
-src/providers/base.py           # Base provider shape
-src/providers/openai_compat.py  # HTTP client for OpenAI/Anthropic-style APIs
-src/tools/                      # Full server MCP tool registration modules
-src/agent_spawn/server.py       # create_agent_spawn_server()
-src/agent_spawn/tools/base.py   # _create_agent_tool() factory
-src/agent_spawn/tools/registry.py
+main.py                         # Thin CLI shim to agent_spawn_mcp.__main__:app
+agent_spawn_mcp/__main__.py                 # Typer CLI: main and spawn commands
+agent_spawn_mcp/server.py                   # create_server() for the full server
+agent_spawn_mcp/utils.py                    # Local chat history helpers
+agent_spawn_mcp/config/models.py            # Pydantic config models and BUILTIN_PROVIDERS
+agent_spawn_mcp/config/loader.py            # load_config(), active provider globals
+agent_spawn_mcp/providers/base.py           # Base provider shape
+agent_spawn_mcp/providers/openai_compat.py  # HTTP client for OpenAI/Anthropic-style APIs
+agent_spawn_mcp/tools/                      # Full server MCP tool registration modules
+agent_spawn_mcp/agent_spawn/server.py       # create_agent_spawn_server()
+agent_spawn_mcp/agent_spawn/tools/base.py   # _create_agent_tool() factory
+agent_spawn_mcp/agent_spawn/tools/registry.py
 configs/default.yaml            # Default full-server provider catalog
 tests/                          # Request-shape and URL-construction tests
 ```
@@ -78,7 +78,7 @@ for an integration test.
 
 ## Provider Loading Rules
 
-`src/config/loader.py` is the source of truth for the full server config flow.
+`agent_spawn_mcp/config/loader.py` is the source of truth for the full server config flow.
 
 1. `load_dotenv("example.env")` is called before config is resolved.
 2. If the YAML config contains `providers`, those entries are used.
@@ -96,7 +96,7 @@ env overrides still apply after YAML loading.
 
 ## Built-In Providers
 
-`BUILTIN_PROVIDERS` lives in `src/config/models.py`.
+`BUILTIN_PROVIDERS` lives in `agent_spawn_mcp/config/models.py`.
 
 Current built-in keys:
 
@@ -128,7 +128,7 @@ shape.
 back into an OpenAI-like `choices[0].message.content` shape.
 
 Keep these compatibility rules centralized in
-`src/providers/openai_compat.py`. Tool modules should not reimplement provider
+`agent_spawn_mcp/providers/openai_compat.py`. Tool modules should not reimplement provider
 request formatting.
 
 ## URL Construction Contract
@@ -154,8 +154,8 @@ Any change to URL joining must update and pass
 
 ## Full Server Tool Pattern
 
-Full-server tools live in `src/tools/` and are registered from
-`src/tools/__init__.py`.
+Full-server tools live in `agent_spawn_mcp/tools/` and are registered from
+`agent_spawn_mcp/tools/__init__.py`.
 
 Use this pattern:
 
@@ -203,12 +203,12 @@ Return shape:
 }
 ```
 
-`src/agent_spawn/tools/base.py` should stay small: it builds messages, calls
+`agent_spawn_mcp/agent_spawn/tools/base.py` should stay small: it builds messages, calls
 `OpenAICompatProvider.chat()`, measures latency, and returns normalized output.
 
 ## OpenAICompatProvider Contract
 
-Important behavior in `src/providers/openai_compat.py`:
+Important behavior in `agent_spawn_mcp/providers/openai_compat.py`:
 
 - Use `httpx.Client`, not provider SDKs.
 - Include response body text in raised `httpx.HTTPStatusError` messages.

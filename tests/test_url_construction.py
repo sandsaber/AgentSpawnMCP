@@ -1,5 +1,5 @@
 import pytest
-from src.providers.openai_compat import OpenAICompatProvider
+from agent_spawn_mcp.providers.openai_compat import OpenAICompatProvider
 
 
 @pytest.mark.parametrize(

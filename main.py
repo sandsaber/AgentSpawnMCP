@@ -1,2 +1,2 @@
-from src.__main__ import app
+from agent_spawn_mcp.__main__ import app
 app()

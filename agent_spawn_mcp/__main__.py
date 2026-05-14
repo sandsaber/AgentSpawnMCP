@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 app = typer.Typer(help="AgentSpawnMCP — Universal OpenAI-compatible MCP server")
 
-load_dotenv("example.env")
+load_dotenv()
 
 
 @app.callback()
@@ -63,8 +63,8 @@ def main(
 
     Run multiple instances for multiple providers simultaneously.
     """
-    from src.config import get_active_provider
-    from src.config.models import ProviderConfig, Capabilities, ModelConfig
+    from agent_spawn_mcp.config import get_active_provider
+    from agent_spawn_mcp.config.models import ProviderConfig, Capabilities, ModelConfig
 
     provider_name = ctx.obj.get("provider")
     cfg_path = ctx.obj.get("config") or "configs/default.yaml"
@@ -97,7 +97,7 @@ def main(
             models=[ModelConfig(name=model or "llama3", type="chat")],
         )
 
-    from src.server import create_server
+    from agent_spawn_mcp.server import create_server
 
     try:
         mcp = create_server(
@@ -173,7 +173,7 @@ def spawn(
 
     Each instance exposes a single {name}_agent tool for task execution.
     """
-    from src.agent_spawn import create_agent_spawn_server
+    from agent_spawn_mcp.agent_spawn import create_agent_spawn_server
 
     token_val = token or (os.getenv(token_env, "") if token_env else "")
     if not token_val:

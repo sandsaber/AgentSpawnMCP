@@ -35,11 +35,19 @@ def register_agent_tools(mcp: FastMCP) -> None:
             messages.append({"role": "system", "content": system_prompt})
         messages.extend(history)
 
+        if allowed_domains and excluded_domains:
+            raise ValueError("Cannot specify both allowed_domains and excluded_domains")
+
         tools = []
         if use_web_search:
             if not p.capabilities.search:
                 raise ValueError(f"Provider `{p.name}` does not support web search.")
-            tools.append({"type": "web_search", "web_search": {}})
+            search_opts: dict = {}
+            if allowed_domains:
+                search_opts["allowed_domains"] = allowed_domains
+            if excluded_domains:
+                search_opts["excluded_domains"] = excluded_domains
+            tools.append({"type": "web_search", "web_search": search_opts})
         if use_code_execution:
             if not p.capabilities.code_exec:
                 raise ValueError(f"Provider `{p.name}` does not support code execution.")

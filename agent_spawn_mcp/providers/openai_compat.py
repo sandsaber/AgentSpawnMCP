@@ -33,6 +33,16 @@ class OpenAICompatProvider(BaseProvider):
         self.default_model = default_model
         self.api_type = api_type
         self.timeout = timeout
+        self._client = httpx.Client(timeout=timeout)
+
+    def close(self) -> None:
+        self._client.close()
+
+    def __enter__(self) -> "OpenAICompatProvider":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()
 
     def _headers(self) -> dict:
         headers = {
@@ -75,16 +85,16 @@ class OpenAICompatProvider(BaseProvider):
             if use_auth_only
             else self._headers()
         )
-        with httpx.Client(timeout=timeout or self.timeout) as client:
-            resp = client.request(
-                method,
-                url,
-                json=json_body,
-                params=params,
-                files=files,
-                data=data,
-                headers=headers,
-            )
+        resp = self._client.request(
+            method,
+            url,
+            json=json_body,
+            params=params,
+            files=files,
+            data=data,
+            headers=headers,
+            timeout=timeout if timeout is not None else self.timeout,
+        )
         if resp.status_code >= 400:
             body = resp.text[:2000] if resp.text else "<empty body>"
             raise httpx.HTTPStatusError(

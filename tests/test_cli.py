@@ -1,13 +1,13 @@
 from typer.testing import CliRunner
 
-from src.__main__ import app
+from agent_spawn_mcp.__main__ import app
 
 
 runner = CliRunner()
 
 
 def test_spawn_accepts_token_env(monkeypatch):
-    import src.agent_spawn
+    import agent_spawn_mcp.agent_spawn
 
     calls = {}
 
@@ -19,7 +19,7 @@ def test_spawn_accepts_token_env(monkeypatch):
         calls.update(kwargs)
         return DummyServer()
 
-    monkeypatch.setattr(src.agent_spawn, "create_agent_spawn_server", fake_create_agent_spawn_server)
+    monkeypatch.setattr(agent_spawn_mcp.agent_spawn, "create_agent_spawn_server", fake_create_agent_spawn_server)
     monkeypatch.setenv("MINIMAX_TOKEN", "secret-token")
 
     result = runner.invoke(

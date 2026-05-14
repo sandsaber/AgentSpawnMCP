@@ -1,11 +1,11 @@
-from src.config import get_active_provider
-from src.config.loader import set_active_provider
-from src.config.models import Capabilities, ModelConfig, ProviderConfig
-from src.server import create_server
+from agent_spawn_mcp.config import get_active_provider
+from agent_spawn_mcp.config.loader import set_active_provider
+from agent_spawn_mcp.config.models import Capabilities, ModelConfig, ProviderConfig
+from agent_spawn_mcp.server import create_server
 
 
 def test_create_server_can_use_inline_provider_without_loading_yaml(monkeypatch):
-    import src.server as server_module
+    import agent_spawn_mcp.server as server_module
 
     def fail_load_config(*args, **kwargs):
         raise AssertionError("load_config should not be called for inline providers")
@@ -31,7 +31,7 @@ def test_create_server_can_use_inline_provider_without_loading_yaml(monkeypatch)
 
 
 def test_create_server_applies_model_override_after_loading_config(monkeypatch):
-    import src.server as server_module
+    import agent_spawn_mcp.server as server_module
 
     provider = ProviderConfig(
         name="configured",

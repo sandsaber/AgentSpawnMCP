@@ -2,7 +2,7 @@
 import json
 import httpx
 import pytest
-from src.providers.openai_compat import OpenAICompatProvider
+from agent_spawn_mcp.providers.openai_compat import OpenAICompatProvider
 
 
 class _Recorder:

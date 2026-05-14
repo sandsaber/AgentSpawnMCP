@@ -92,7 +92,7 @@ def register_chat_tools(mcp: FastMCP) -> None:
         for s in sessions:
             history = json.loads(s.read_text(encoding="utf-8"))
             turns = len(history) // 2
-            last = history[-1]["time"] if history else "empty"
+            last = history[-1].get("time", "?") if history else "empty"
             result.append(f"- `{s.stem}` — {turns} turn(s), last: {last}")
         return "\n".join(result)
 

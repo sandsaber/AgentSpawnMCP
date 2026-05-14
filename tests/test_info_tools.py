@@ -1,7 +1,7 @@
 import asyncio
 
-from src.config.models import Capabilities, ModelConfig, ProviderConfig
-from src.tools import info as info_module
+from agent_spawn_mcp.config.models import Capabilities, ModelConfig, ProviderConfig
+from agent_spawn_mcp.tools import info as info_module
 
 
 class DummyMCP:

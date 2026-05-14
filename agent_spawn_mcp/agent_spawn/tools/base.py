@@ -52,7 +52,27 @@ def _create_agent_tool(
 ):
     """
     Factory: creates an agent tool function for a specific provider.
+
+    The provider client is created lazily on first invocation and reused
+    across subsequent calls so the underlying httpx connection pool is
+    shared. Per-call ``timeout`` is applied at request level.
     """
+    client_holder: dict[str, OpenAICompatProvider] = {}
+
+    def _get_client(timeout_seconds: float) -> OpenAICompatProvider:
+        existing = client_holder.get("client")
+        if existing is not None:
+            return existing
+        client = OpenAICompatProvider(
+            name=provider_name,
+            base_url=api_url,
+            api_key=api_token,
+            api_type=api_type,
+            timeout=timeout_seconds,
+        )
+        client_holder["client"] = client
+        return client
+
     async def agent_tool(
         task: str,
         model: str | None = None,
@@ -88,13 +108,7 @@ def _create_agent_tool(
         if max_tokens is not None and max_tokens <= 0:
             raise ValueError("max_tokens must be greater than zero when provided.")
 
-        client = OpenAICompatProvider(
-            name=provider_name,
-            base_url=api_url,
-            api_key=api_token,
-            api_type=api_type,
-            timeout=timeout_seconds,
-        )
+        client = _get_client(timeout_seconds)
 
         messages = []
         if system_prompt:

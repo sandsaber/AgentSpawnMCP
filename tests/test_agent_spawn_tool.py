@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from src.agent_spawn.tools.base import _create_agent_tool
-from src.providers.openai_compat import OpenAICompatProvider
+from agent_spawn_mcp.agent_spawn.tools.base import _create_agent_tool
+from agent_spawn_mcp.providers.openai_compat import OpenAICompatProvider
 
 
 def test_agent_tool_uses_default_model_and_returns_metadata(monkeypatch):

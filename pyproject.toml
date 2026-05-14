@@ -1,6 +1,6 @@
 [project]
 name = "agent-spawn-mcp"
-version = "1.1.3"
+version = "2.0.0"
 description = "Universal MCP server for any OpenAI-compatible LLM. Supports OpenAI and Anthropic API formats."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -29,7 +30,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agent-spawn-mcp = "src.__main__:app"
+agent-spawn-mcp = "agent_spawn_mcp.__main__:app"
 
 [project.urls]
 Homepage = "https://github.com/sandsaber/AgentSpawnMCP"
@@ -41,7 +42,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["agent_spawn_mcp"]
 
 [build-system]
 requires = ["hatchling"]

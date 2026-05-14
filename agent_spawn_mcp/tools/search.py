@@ -29,10 +29,16 @@ def register_search_tools(mcp: FastMCP) -> None:
 
         include_opts = ["citations"] if include_citations else None
 
+        search_opts: dict = {}
+        if allowed_domains:
+            search_opts["allowed_domains"] = allowed_domains
+        if excluded_domains:
+            search_opts["excluded_domains"] = excluded_domains
+
         resp = client.chat(
             model=model,
             messages=[{"role": "user", "content": prompt}],
-            tools=[{"type": "web_search", "web_search": {}}],
+            tools=[{"type": "web_search", "web_search": search_opts}],
             include=include_opts,
             max_turns=max_turns,
         )
