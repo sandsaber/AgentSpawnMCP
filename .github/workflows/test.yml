@@ -17,6 +17,6 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         run: uv python install ${{ matrix.python }}
       - name: Install deps
-        run: uv sync --group dev
+        run: uv sync --locked --group dev
       - name: Run tests
-        run: uv run pytest -v
+        run: uv run --locked pytest -v

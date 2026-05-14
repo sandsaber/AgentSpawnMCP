@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.3 - 2026-05-14
+
+### Changed
+
+- Refreshed the lockfile to the latest compatible dependency versions.
+- Updated GitHub Actions to use locked dependency installs for tests and to
+  check the lockfile before publishing.
+- Added `--token-env` for spawn-agent MCP servers so persistent client configs
+  can reference token environment variables.
+- Added README instructions for registering AgentSpawnMCP in Codex CLI.
+- Added a README hero image.
+
 ## 1.1.2 - 2026-05-14
 
 ### Fixed

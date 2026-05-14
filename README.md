@@ -1,15 +1,20 @@
 # AgentSpawnMCP
 
+<p align="center">
+  <img src="docs/assets/agent-spawn-mcp-hero.png" alt="AgentSpawnMCP routing tasks to multiple model agents" width="100%">
+</p>
+
 Universal MCP server for any OpenAI-compatible LLM. Supports OpenAI and Anthropic API formats, cloud providers (OpenAI, Grok, Claude, Minimax, DeepSeek) and local models (Ollama, LM Studio, Jan). Built on FastMCP with pure httpx.
 
 ## Quick Start — Spawn Agents
 
 ```bash
 # No install needed — run directly with uvx
+export MINIMAX_TOKEN=your-token
 uvx agent-spawn-mcp spawn \
   --name minimax \
   --url https://api.minimax.io/anthropic/v1 \
-  --token your-token \
+  --token-env MINIMAX_TOKEN \
   --model MiniMax-M2.7 \
   --api-type anthropic
 ```
@@ -18,7 +23,7 @@ Or install globally:
 
 ```bash
 pip install agent-spawn-mcp
-agent-spawn-mcp spawn --name minimax --url https://api.minimax.io --token TOKEN --model MiniMax-M2.7
+agent-spawn-mcp spawn --name minimax --url https://api.minimax.io --token-env MINIMAX_TOKEN --model MiniMax-M2.7
 ```
 
 ## API Types
@@ -92,6 +97,52 @@ Add to your `.mcp.json`:
   name `{name}_agent`, and duplicates collide.
 - `--token` on the command line is visible in `ps` output and some crash logs.
   Prefer keeping the MCP config file read-protected (`chmod 600`).
+
+## Codex CLI Integration
+
+Codex can register stdio MCP servers with `codex mcp add`.
+
+For a Minimax Anthropic-compatible agent:
+
+```bash
+export MINIMAX_TOKEN=your-minimax-token
+
+codex mcp add minimax-agent -- \
+  uvx agent-spawn-mcp spawn \
+    --name minimax \
+    --url https://api.minimax.io/anthropic/v1 \
+    --token-env MINIMAX_TOKEN \
+    --model MiniMax-M2.7 \
+    --api-type anthropic
+```
+
+For z.ai GLM through the OpenAI-compatible API:
+
+```bash
+export ZAI_TOKEN=your-zai-token
+
+codex mcp add glm-agent -- \
+  uvx agent-spawn-mcp spawn \
+    --name glm \
+    --url https://api.z.ai/api/paas/v4 \
+    --token-env ZAI_TOKEN \
+    --model glm-5.1
+```
+
+Verify the registration:
+
+```bash
+codex mcp list
+codex mcp get minimax-agent
+```
+
+Restart Codex from a shell where the token env var is set. The tool exposed to
+Codex is named from `--name`, for example `minimax_agent` or `glm_agent`.
+
+If you need Codex to store the env var with the MCP server config, add
+`--env MINIMAX_TOKEN="$MINIMAX_TOKEN"` before `--`. This is convenient, but it
+stores the secret in Codex config. Passing `--token` directly also works, but
+stores the token in the command args.
 
 ## Tools Exposed
 

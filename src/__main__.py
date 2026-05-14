@@ -135,9 +135,13 @@ def spawn(
         ..., "--url", "-u",
         help="API base URL (e.g. https://api.minimax.chat/v1).",
     ),
-    token: str = typer.Option(
-        ..., "--token", "-t",
-        help="API token.",
+    token: str | None = typer.Option(
+        None, "--token", "-t",
+        help="API token. Prefer --token-env for persistent MCP config.",
+    ),
+    token_env: str | None = typer.Option(
+        None, "--token-env",
+        help="Name of an environment variable containing the API token.",
     ),
     model: str | None = typer.Option(
         None, "--model", "-m",
@@ -156,20 +160,26 @@ def spawn(
       uv run python main.py spawn \\
         --name minimax \\
         --url https://api.minimax.io \\
-        --token your-minimax-token \\
+        --token-env MINIMAX_TOKEN \\
         --model MiniMax-M2.7
 
       # For Anthropic-compatible API:
       uv run python main.py spawn \\
         --name claude \\
         --url https://api.anthropic.com \\
-        --token your-anthropic-token \\
+        --token-env ANTHROPIC_TOKEN \\
         --model claude-sonnet-4-20250514 \\
         --api-type anthropic
 
     Each instance exposes a single {name}_agent tool for task execution.
     """
     from src.agent_spawn import create_agent_spawn_server
+
+    token_val = token or (os.getenv(token_env, "") if token_env else "")
+    if not token_val:
+        hint = f"Set {token_env} or pass --token." if token_env else "Pass --token or --token-env."
+        print(f"Token not found. {hint}", file=sys.stderr)
+        sys.exit(1)
 
     print(
         f"Starting AgentSpawnMCP (name={name}, url={url}, api_type={api_type}, model={model or 'default'})",
@@ -179,7 +189,7 @@ def spawn(
     mcp = create_agent_spawn_server(
         provider_name=name,
         api_url=url,
-        api_token=token,
+        api_token=token_val,
         default_model=model or "",
         api_type=api_type,
     )

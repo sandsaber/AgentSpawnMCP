@@ -19,7 +19,7 @@ provider-specific agent tool plus `agent_info`.
 uvx agent-spawn-mcp spawn \
   --name minimax \
   --url https://api.minimax.io/anthropic/v1 \
-  --token TOKEN \
+  --token-env MINIMAX_TOKEN \
   --model MiniMax-M2.7 \
   --api-type anthropic
 ```
@@ -116,7 +116,7 @@ For full-server built-ins:
 5. Update README examples when the provider changes user-facing setup.
 
 For spawn mode, adding a provider normally requires no code change. Use a new
-`--name`, `--url`, `--token`, and optional `--model`.
+`--name`, `--url`, `--token` or `--token-env`, and optional `--model`.
 
 ## API Type Rules
 
@@ -239,6 +239,7 @@ add a clearly scoped adapter.
 - Avoid printing tokens or full auth headers.
 - `--token` passed on the command line can be visible in process listings and
   crash logs; mention this in user-facing setup docs when relevant.
+- Prefer `--token-env` in persistent MCP setup examples.
 - Keep example configs as templates, not secret stores.
 
 ## Validation Expectations
